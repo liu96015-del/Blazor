@@ -1,0 +1,195 @@
+@page "/"
+
+<PageTitle>员工管理</PageTitle>
+
+<div class="page-card">
+    <div class="toolbar d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-light border" @onclick="() => ChangeRange(0)">日</button>
+            <button class="btn btn-light border" @onclick="() => ChangeRange(7)">最近7天</button>
+            <button class="btn btn-light border" @onclick="() => ChangeRange(30)">最近30天</button>
+            <div class="input-group date-range">
+                <span class="input-group-text bg-white"><i class="bi bi-calendar2-date"></i></span>
+                <input class="form-control" value="@RangeLabel" readonly />
+            </div>
+            <select class="form-select select-compact" @bind="SelectedPermission">
+                <option value="">权限类型</option>
+                <option>管理员</option>
+                <option>普通员工</option>
+            </select>
+            <select class="form-select select-compact" @bind="SelectedStatus">
+                <option value="">启用状态</option>
+                <option value="Enable">已启用</option>
+                <option value="Disable">已停用</option>
+            </select>
+            <select class="form-select select-compact" @bind="SelectedScope">
+                <option value="">角色范围</option>
+                <option>财务</option>
+                <option>人事</option>
+                <option>技术</option>
+            </select>
+            <button class="btn btn-primary">查询</button>
+            <button class="btn btn-outline-primary">导出</button>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-primary">筛选</button>
+            <button class="btn btn-primary">新增员工</button>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3 summary-row">
+        @foreach (var summary in Summaries)
+        {
+            <div class="col-12 col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-muted small">@summary.Title</div>
+                            <div class="display-6 fw-semibold">@summary.Count</div>
+                        </div>
+                        <div class="badge bg-light text-primary p-3 rounded-circle">
+                            <i class="bi @summary.Icon fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle table-hover data-table">
+            <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>姓名</th>
+                    <th>工号</th>
+                    <th>身份证</th>
+                    <th>手机号</th>
+                    <th>邮箱</th>
+                    <th>部门</th>
+                    <th>角色</th>
+                    <th>上级</th>
+                    <th>启用状态</th>
+                    <th>创建时间</th>
+                    <th>更新时间</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in FilteredRows)
+                {
+                    <tr>
+                        <td>@row.Id</td>
+                        <td class="fw-semibold">@row.Name</td>
+                        <td>@row.EmployeeNo</td>
+                        <td>@row.IdCard</td>
+                        <td>@row.Phone</td>
+                        <td>@row.Email</td>
+                        <td>@row.Department</td>
+                        <td>
+                            <span class="badge bg-light text-primary border">@row.Role</span>
+                        </td>
+                        <td>@row.Manager</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" checked="@row.Enabled" @onchange="(e) => Toggle(row, e)" />
+                            </div>
+                        </td>
+                        <td>@row.Created.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>@row.Updated.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="text-end action-col">
+                            <a class="text-primary" href="javascript:void(0)">配置</a>
+                            <a class="text-primary" href="javascript:void(0)">禁用</a>
+                            <a class="text-primary" href="javascript:void(0)">删除</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<EmployeeRow> Rows { get; set; } = new();
+
+    private IEnumerable<EmployeeRow> FilteredRows => Rows
+        .Where(r => string.IsNullOrWhiteSpace(SelectedStatus) || (SelectedStatus == "Enable" && r.Enabled) || (SelectedStatus == "Disable" && !r.Enabled))
+        .Where(r => string.IsNullOrWhiteSpace(SelectedPermission) || r.Role.Contains(SelectedPermission, StringComparison.OrdinalIgnoreCase))
+        .Where(r => string.IsNullOrWhiteSpace(SelectedScope) || r.Department.Contains(SelectedScope, StringComparison.OrdinalIgnoreCase));
+
+    private string SelectedPermission { get; set; } = string.Empty;
+    private string SelectedStatus { get; set; } = string.Empty;
+    private string SelectedScope { get; set; } = string.Empty;
+    private string RangeLabel { get; set; } = "2025-01-01 12:00:01 - 2025-05-30 12:00:01";
+
+    private List<SummaryCard> Summaries { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Summaries = new()
+        {
+            new("员工总数", 132, "bi-people"),
+            new("当月入职", 12, "bi-person-plus"),
+            new("已配置角色", 6, "bi-shield-lock"),
+            new("已开通账号", 120, "bi-ui-checks"),
+        };
+
+        var now = DateTime.Now;
+        Rows = new()
+        {
+            new(1, "郑怡", "138384", "120368362402054010", "120368362402054010", "120368362402054010", "人事", "管理员", "郑怡", true, now, now),
+            new(2, "何丽", "978977", "123123213423423", "15326256325", "hel@qq.com", "工程部", "管理员", "梁文利", true, now.AddDays(-6), now.AddDays(-1)),
+            new(3, "俊恒兰", "567856", "120330197811200604", "120330197811200604", "jack@qq.com", "技术部", "管理员", "李思洁", true, now.AddDays(-7), now.AddDays(-2)),
+            new(4, "张源", "574682", "120103200602173232", "120103200602173232", "gary@qq.com", "技术部", "普通员工", "魏子俊", true, now.AddDays(-9), now.AddDays(-3)),
+            new(5, "王志伟", "555443", "120368362402054010", "120368362402054010", "king@gmail.com", "研发中心", "普通员工", "彭荣", true, now.AddDays(-10), now.AddDays(-4)),
+            new(6, "魏子俊", "798613", "120368362402054010", "120368362402054010", "wei@example.com", "研发中心", "管理员", "魏子俊", true, now.AddDays(-12), now.AddDays(-6)),
+            new(7, "王菁", "687428", "120368362402054010", "120368362402054010", "wang@qq.com", "研发中心", "普通员工", "魏子俊", true, now.AddDays(-13), now.AddDays(-7)),
+        };
+    }
+
+    private void Toggle(EmployeeRow row, ChangeEventArgs args)
+    {
+        row.Enabled = args.Value is bool flag && flag;
+    }
+
+    private void ChangeRange(int days)
+    {
+        var end = DateTime.Now;
+        var start = days == 0 ? end : end.AddDays(-days);
+        RangeLabel = $"{start:yyyy-MM-dd HH:mm:ss} - {end:yyyy-MM-dd HH:mm:ss}";
+    }
+
+    private record SummaryCard(string Title, int Count, string Icon);
+
+    private class EmployeeRow
+    {
+        public EmployeeRow(int id, string name, string employeeNo, string idCard, string phone, string email, string department, string role, string manager, bool enabled, DateTime created, DateTime updated)
+        {
+            Id = id;
+            Name = name;
+            EmployeeNo = employeeNo;
+            IdCard = idCard;
+            Phone = phone;
+            Email = email;
+            Department = department;
+            Role = role;
+            Manager = manager;
+            Enabled = enabled;
+            Created = created;
+            Updated = updated;
+        }
+
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string EmployeeNo { get; set; }
+        public string IdCard { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
+        public string Department { get; set; }
+        public string Role { get; set; }
+        public string Manager { get; set; }
+        public bool Enabled { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Updated { get; set; }
+    }
+}
