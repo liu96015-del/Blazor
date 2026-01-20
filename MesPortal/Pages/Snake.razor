@@ -1,0 +1,663 @@
+@page "/snake"
+@implements IDisposable
+
+<PageTitle>炫彩贪吃蛇</PageTitle>
+
+<div class="snake-page">
+    <section class="snake-hero">
+        <div>
+            <p class="snake-eyebrow">小游戏</p>
+            <h1>霓虹贪吃蛇</h1>
+            <p class="snake-subtitle">点击棋盘获取焦点，使用方向键或 WASD 操作，体验节奏加速、障碍挑战与奖励果实。</p>
+        </div>
+        <div class="snake-hero-stats">
+            <div>
+                <span>当前得分</span>
+                <strong>@Score</strong>
+            </div>
+            <div>
+                <span>最高记录</span>
+                <strong>@BestScore</strong>
+            </div>
+            <div>
+                <span>当前等级</span>
+                <strong>@Level</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="snake-layout">
+        <div class="snake-board-panel">
+            <div class="snake-board-shell">
+                <div class="@BoardClass" style="--grid-cols: @GridColumns; --grid-rows: @GridRows;" tabindex="0"
+                     @onkeydown="HandleKey" @onkeydown:preventDefault="true">
+                    @for (var row = 0; row < GridRows; row++)
+                    {
+                        @for (var col = 0; col < GridColumns; col++)
+                        {
+                            <div class="@GetCellClass(row, col)"></div>
+                        }
+                    }
+                </div>
+                <div class="snake-overlay">
+                    @if (GameOver)
+                    {
+                        <div class="overlay-card">
+                            <h3>游戏结束</h3>
+                            <p>再来一局刷新记录吧！</p>
+                            <button class="btn btn-primary" @onclick="Restart">重新开始</button>
+                        </div>
+                    }
+                    else if (!IsRunning)
+                    {
+                        <div class="overlay-card">
+                            <h3>准备开始</h3>
+                            <p>点击“开始游戏”或按空格开始。</p>
+                            <button class="btn btn-primary" @onclick="Start">开始游戏</button>
+                        </div>
+                    }
+                    else if (IsPaused)
+                    {
+                        <div class="overlay-card">
+                            <h3>暂停中</h3>
+                            <p>按空格继续，也可使用侧边按钮。</p>
+                            <button class="btn btn-outline-light" @onclick="TogglePause">继续</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="snake-hints">
+                <div>
+                    <span class="legend food"></span>
+                    <span>普通果实 +10</span>
+                </div>
+                <div>
+                    <span class="legend bonus"></span>
+                    <span>奖励果实 +30</span>
+                </div>
+                <div>
+                    <span class="legend obstacle"></span>
+                    <span>障碍物</span>
+                </div>
+                <div>
+                    <span class="legend snake"></span>
+                    <span>蛇身</span>
+                </div>
+            </div>
+        </div>
+
+        <aside class="snake-sidebar">
+            <div class="panel-card">
+                <h4>控制面板</h4>
+                <div class="panel-actions">
+                    <button class="btn btn-primary" @onclick="Start" disabled="@IsRunning">开始</button>
+                    <button class="btn btn-outline-primary" @onclick="TogglePause" disabled="@(!IsRunning)">@(IsPaused ? "继续" : "暂停")</button>
+                    <button class="btn btn-outline-danger" @onclick="Restart">重开</button>
+                </div>
+                <div class="panel-row">
+                    <span>状态</span>
+                    <strong>@StatusLabel</strong>
+                </div>
+                <div class="panel-row">
+                    <span>连击长度</span>
+                    <strong>@SnakeLength</strong>
+                </div>
+                <div class="panel-row">
+                    <span>奖励倒计时</span>
+                    <strong>@BonusCountdownLabel</strong>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <h4>游戏设置</h4>
+                <div class="setting-group">
+                    <label>棋盘尺寸</label>
+                    <select class="form-select" @bind="SelectedBoardKey">
+                        @foreach (var option in BoardOptions.Keys)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>基础速度</label>
+                    <select class="form-select" @bind="SelectedSpeedKey">
+                        @foreach (var option in SpeedOptions.Keys)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>障碍密度</label>
+                    <select class="form-select" @bind="SelectedObstacleKey">
+                        @foreach (var option in ObstacleOptions.Keys)
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </select>
+                </div>
+                <div class="setting-group toggles">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" @bind="WrapWalls" />
+                        <span class="form-check-label">穿墙模式</span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" @bind="DynamicSpeed" />
+                        <span class="form-check-label">自动加速</span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" @bind="ShowGrid" />
+                        <span class="form-check-label">显示网格</span>
+                    </label>
+                </div>
+                <button class="btn btn-outline-primary w-100" @onclick="ApplySettings">应用设置</button>
+            </div>
+
+            <div class="panel-card">
+                <h4>进阶玩法</h4>
+                <ul class="tips">
+                    <li>连续吃果实时速度会逐级提升，保持冷静。</li>
+                    <li>奖励果实只出现短时间，错过会消失。</li>
+                    <li>关闭穿墙可挑战更高难度。</li>
+                </ul>
+            </div>
+        </aside>
+    </section>
+</div>
+
+@code {
+    private const int BonusLifetimeTicks = 22;
+
+    private readonly Random _random = new();
+    private readonly object _lock = new();
+    private System.Timers.Timer? _timer;
+
+    private List<Position> _snake = new();
+    private HashSet<Position> _obstacles = new();
+    private Position _food;
+    private Position? _bonusFood;
+    private int _bonusTicksRemaining;
+
+    private Direction _direction = Direction.Right;
+    private Direction _nextDirection = Direction.Right;
+
+    private int _score;
+    private int _bestScore;
+    private int _level = 1;
+    private bool _running;
+    private bool _paused;
+    private bool _gameOver;
+
+    private string _selectedBoardKey = "经典 20x20";
+    private string _selectedSpeedKey = "标准";
+    private string _selectedObstacleKey = "中等";
+    private bool _wrapWalls = true;
+    private bool _dynamicSpeed = true;
+    private bool _showGrid = true;
+
+    private readonly Dictionary<string, (int Rows, int Columns)> BoardOptions = new()
+    {
+        { "经典 20x20", (20, 20) },
+        { "宽屏 24x18", (18, 24) },
+        { "挑战 26x26", (26, 26) },
+    };
+
+    private readonly Dictionary<string, int> SpeedOptions = new()
+    {
+        { "轻松", 190 },
+        { "标准", 150 },
+        { "极速", 120 },
+    };
+
+    private readonly Dictionary<string, int> ObstacleOptions = new()
+    {
+        { "关闭", 0 },
+        { "少量", 8 },
+        { "中等", 16 },
+        { "高密度", 24 },
+    };
+
+    protected override void OnInitialized()
+    {
+        ResetGame();
+    }
+
+    private int GridRows => BoardOptions[_selectedBoardKey].Rows;
+    private int GridColumns => BoardOptions[_selectedBoardKey].Columns;
+
+    private int Score => _score;
+    private int BestScore => _bestScore;
+    private int Level => _level;
+    private int SnakeLength => _snake.Count;
+    private bool IsRunning => _running;
+    private bool IsPaused => _paused;
+    private bool GameOver => _gameOver;
+
+    private string SelectedBoardKey
+    {
+        get => _selectedBoardKey;
+        set => _selectedBoardKey = value;
+    }
+
+    private string SelectedSpeedKey
+    {
+        get => _selectedSpeedKey;
+        set => _selectedSpeedKey = value;
+    }
+
+    private string SelectedObstacleKey
+    {
+        get => _selectedObstacleKey;
+        set => _selectedObstacleKey = value;
+    }
+
+    private bool WrapWalls
+    {
+        get => _wrapWalls;
+        set => _wrapWalls = value;
+    }
+
+    private bool DynamicSpeed
+    {
+        get => _dynamicSpeed;
+        set => _dynamicSpeed = value;
+    }
+
+    private bool ShowGrid
+    {
+        get => _showGrid;
+        set => _showGrid = value;
+    }
+
+    private string BoardClass => ShowGrid ? "snake-board show-grid" : "snake-board";
+
+    private string StatusLabel => GameOver
+        ? "已结束"
+        : IsPaused
+            ? "暂停"
+            : IsRunning
+                ? "进行中"
+                : "未开始";
+
+    private string BonusCountdownLabel => _bonusFood.HasValue
+        ? $"{_bonusTicksRemaining} 格"
+        : "暂无";
+
+    private void Start()
+    {
+        if (GameOver)
+        {
+            Restart();
+            return;
+        }
+
+        if (IsRunning)
+        {
+            return;
+        }
+
+        _running = true;
+        _paused = false;
+        EnsureTimer();
+        _timer?.Start();
+    }
+
+    private void TogglePause()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        _paused = !_paused;
+    }
+
+    private void Restart()
+    {
+        ResetGame();
+        Start();
+    }
+
+    private void ApplySettings()
+    {
+        ResetGame();
+    }
+
+    private void ResetGame()
+    {
+        _running = false;
+        _paused = false;
+        _gameOver = false;
+        _score = 0;
+        _level = 1;
+        _direction = Direction.Right;
+        _nextDirection = Direction.Right;
+        _bonusFood = null;
+        _bonusTicksRemaining = 0;
+
+        var startRow = GridRows / 2;
+        var startCol = GridColumns / 2;
+        _snake = new List<Position>
+        {
+            new(startRow, startCol),
+            new(startRow, startCol - 1),
+            new(startRow, startCol - 2)
+        };
+
+        BuildObstacles();
+        PlaceFood();
+        UpdateSpeed();
+        StateHasChanged();
+    }
+
+    private void BuildObstacles()
+    {
+        _obstacles = new HashSet<Position>();
+        var obstacleCount = ObstacleOptions[_selectedObstacleKey];
+        var attempts = 0;
+
+        while (_obstacles.Count < obstacleCount && attempts < obstacleCount * 10)
+        {
+            attempts++;
+            var position = RandomEmptyPosition();
+            if (!IsSnake(position))
+            {
+                _obstacles.Add(position);
+            }
+        }
+    }
+
+    private void PlaceFood()
+    {
+        _food = RandomEmptyPosition();
+    }
+
+    private Position RandomEmptyPosition()
+    {
+        Position position;
+        do
+        {
+            position = new Position(_random.Next(0, GridRows), _random.Next(0, GridColumns));
+        }
+        while (IsOccupied(position));
+
+        return position;
+    }
+
+    private bool IsOccupied(Position position)
+    {
+        return IsSnake(position) || _obstacles.Contains(position) || _food.Equals(position) || (_bonusFood?.Equals(position) ?? false);
+    }
+
+    private bool IsSnake(Position position) => _snake.Contains(position);
+
+    private void EnsureTimer()
+    {
+        if (_timer != null)
+        {
+            _timer.Interval = GetTickInterval();
+            return;
+        }
+
+        _timer = new System.Timers.Timer(GetTickInterval());
+        _timer.Elapsed += async (_, _) => await TickAsync();
+        _timer.AutoReset = true;
+    }
+
+    private int GetTickInterval()
+    {
+        var baseSpeed = SpeedOptions[_selectedSpeedKey];
+        if (!DynamicSpeed)
+        {
+            return baseSpeed;
+        }
+
+        return Math.Max(70, baseSpeed - (_level - 1) * 10);
+    }
+
+    private void UpdateSpeed()
+    {
+        if (_timer != null)
+        {
+            _timer.Interval = GetTickInterval();
+        }
+    }
+
+    private async Task TickAsync()
+    {
+        if (!_running || _paused)
+        {
+            return;
+        }
+
+        lock (_lock)
+        {
+            Step();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void Step()
+    {
+        _direction = _nextDirection;
+        var head = _snake[0];
+        var nextHead = GetNextPosition(head, _direction);
+
+        if (!WrapWalls && HitsWall(nextHead))
+        {
+            EndGame();
+            return;
+        }
+
+        nextHead = NormalizePosition(nextHead);
+
+        var grew = nextHead.Equals(_food) || (_bonusFood.HasValue && nextHead.Equals(_bonusFood.Value));
+        var hitsSelf = IsSnake(nextHead) && !(!grew && nextHead.Equals(_snake[^1]));
+        if (_obstacles.Contains(nextHead) || hitsSelf)
+        {
+            EndGame();
+            return;
+        }
+
+        if (nextHead.Equals(_food))
+        {
+            _score += 10;
+            PlaceFood();
+            MaybeSpawnBonus();
+        }
+        else if (_bonusFood.HasValue && nextHead.Equals(_bonusFood.Value))
+        {
+            _score += 30;
+            _bonusFood = null;
+            _bonusTicksRemaining = 0;
+        }
+
+        _snake.Insert(0, nextHead);
+        if (!grew)
+        {
+            _snake.RemoveAt(_snake.Count - 1);
+        }
+
+        UpdateLevel();
+        HandleBonusCountdown();
+        UpdateSpeed();
+    }
+
+    private void UpdateLevel()
+    {
+        _level = Math.Clamp(1 + _score / 50, 1, 10);
+        if (_score > _bestScore)
+        {
+            _bestScore = _score;
+        }
+    }
+
+    private void MaybeSpawnBonus()
+    {
+        if (_bonusFood.HasValue)
+        {
+            return;
+        }
+
+        if (_random.NextDouble() < 0.22)
+        {
+            _bonusFood = RandomEmptyPosition();
+            _bonusTicksRemaining = BonusLifetimeTicks;
+        }
+    }
+
+    private void HandleBonusCountdown()
+    {
+        if (!_bonusFood.HasValue)
+        {
+            return;
+        }
+
+        _bonusTicksRemaining--;
+        if (_bonusTicksRemaining <= 0)
+        {
+            _bonusFood = null;
+        }
+    }
+
+    private void EndGame()
+    {
+        _running = false;
+        _paused = false;
+        _gameOver = true;
+    }
+
+    private Position GetNextPosition(Position position, Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => new Position(position.Row - 1, position.Column),
+            Direction.Down => new Position(position.Row + 1, position.Column),
+            Direction.Left => new Position(position.Row, position.Column - 1),
+            Direction.Right => new Position(position.Row, position.Column + 1),
+            _ => position
+        };
+    }
+
+    private bool HitsWall(Position position)
+    {
+        return position.Row < 0 || position.Row >= GridRows || position.Column < 0 || position.Column >= GridColumns;
+    }
+
+    private Position NormalizePosition(Position position)
+    {
+        var row = position.Row;
+        var column = position.Column;
+
+        if (row < 0)
+        {
+            row = GridRows - 1;
+        }
+        else if (row >= GridRows)
+        {
+            row = 0;
+        }
+
+        if (column < 0)
+        {
+            column = GridColumns - 1;
+        }
+        else if (column >= GridColumns)
+        {
+            column = 0;
+        }
+
+        return new Position(row, column);
+    }
+
+    private void HandleKey(KeyboardEventArgs args)
+    {
+        if (args.Key == " ")
+        {
+            if (!IsRunning)
+            {
+                Start();
+            }
+            else
+            {
+                TogglePause();
+            }
+            return;
+        }
+
+        var direction = args.Key switch
+        {
+            "ArrowUp" or "w" or "W" => Direction.Up,
+            "ArrowDown" or "s" or "S" => Direction.Down,
+            "ArrowLeft" or "a" or "A" => Direction.Left,
+            "ArrowRight" or "d" or "D" => Direction.Right,
+            _ => (Direction?)null
+        };
+
+        if (direction.HasValue && !IsOpposite(direction.Value, _direction))
+        {
+            _nextDirection = direction.Value;
+        }
+    }
+
+    private bool IsOpposite(Direction next, Direction current)
+    {
+        return (next == Direction.Up && current == Direction.Down)
+            || (next == Direction.Down && current == Direction.Up)
+            || (next == Direction.Left && current == Direction.Right)
+            || (next == Direction.Right && current == Direction.Left);
+    }
+
+    private string GetCellClass(int row, int col)
+    {
+        var position = new Position(row, col);
+        if (_snake.Count > 0 && position.Equals(_snake[0]))
+        {
+            return "snake-cell head";
+        }
+
+        if (IsSnake(position))
+        {
+            return "snake-cell body";
+        }
+
+        if (position.Equals(_food))
+        {
+            return "snake-cell food";
+        }
+
+        if (_bonusFood.HasValue && position.Equals(_bonusFood.Value))
+        {
+            return "snake-cell bonus";
+        }
+
+        if (_obstacles.Contains(position))
+        {
+            return "snake-cell obstacle";
+        }
+
+        return "snake-cell";
+    }
+
+    public void Dispose()
+    {
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+        }
+    }
+
+    private readonly record struct Position(int Row, int Column);
+
+    private enum Direction
+    {
+        Up,
+        Down,
+        Left,
+        Right
+    }
+}
