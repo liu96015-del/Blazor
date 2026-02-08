@@ -1,0 +1,112 @@
+@page "/csharp"
+
+<PageTitle>C#基础教学</PageTitle>
+
+<div class="lesson-page">
+    <section class="lesson-hero">
+        <div>
+            <p class="lesson-eyebrow">C# 入门教学</p>
+            <h1>C# 基础知识速览</h1>
+            <p class="lesson-subtitle">
+                从语法基础到面向对象思想，快速掌握构建 .NET 应用所需的关键概念与代码习惯。
+            </p>
+            <div class="lesson-tags">
+                <span class="badge bg-light text-primary">.NET</span>
+                <span class="badge bg-light text-primary">面向对象</span>
+                <span class="badge bg-light text-primary">实用示例</span>
+            </div>
+        </div>
+        <div class="lesson-quicklook">
+            <div>
+                <h3>学习路线</h3>
+                <p>语法基础 → 控制流 → 类与对象 → 集合/LINQ → 异常与异步</p>
+            </div>
+            <div>
+                <h3>建议实践</h3>
+                <p>每学完一节写 3-5 个小函数，逐步搭建控制台/Blazor 小项目。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="lesson-grid">
+        <article class="lesson-card">
+            <h2>1. 变量与数据类型</h2>
+            <p>常用类型包括 <strong>int</strong>、<strong>double</strong>、<strong>bool</strong>、<strong>string</strong>，并支持类型推断。</p>
+            <pre><code>int age = 25;
+string name = "Chen";
+var score = 98.5;
+bool isActive = true;</code></pre>
+        </article>
+
+        <article class="lesson-card">
+            <h2>2. 控制流</h2>
+            <p>使用 <strong>if</strong>、<strong>switch</strong>、<strong>for</strong> 与 <strong>foreach</strong> 管理逻辑分支与循环。</p>
+            <pre><code>if (score &gt;= 60)
+{
+    Console.WriteLine("及格");
+}
+else
+{
+    Console.WriteLine("继续努力");
+}</code></pre>
+        </article>
+
+        <article class="lesson-card">
+            <h2>3. 类与对象</h2>
+            <p>C# 以类为核心组织代码，支持封装、继承与多态。</p>
+            <pre><code>public class Student
+{
+    public string Name { get; set; }
+    public int Grade { get; set; }
+
+    public void Study()
+    {
+        Console.WriteLine($"{Name} is studying...");
+    }
+}</code></pre>
+        </article>
+
+        <article class="lesson-card">
+            <h2>4. 集合与 LINQ</h2>
+            <p>List、Dictionary 常用，LINQ 让筛选与排序更直观。</p>
+            <pre><code>var students = new List&lt;string&gt; { "Tom", "Lily", "Andy" };
+var result = students.Where(s =&gt; s.StartsWith("A"));</code></pre>
+        </article>
+
+        <article class="lesson-card">
+            <h2>5. 异常处理</h2>
+            <p>用 <strong>try/catch</strong> 捕获异常，用 <strong>finally</strong> 做收尾。</p>
+            <pre><code>try
+{
+    var number = int.Parse("123");
+}
+catch (FormatException ex)
+{
+    Console.WriteLine(ex.Message);
+}
+finally
+{
+    Console.WriteLine("解析结束");
+}</code></pre>
+        </article>
+
+        <article class="lesson-card">
+            <h2>6. 异步编程</h2>
+            <p>通过 <strong>async/await</strong> 编写非阻塞逻辑，提升响应速度。</p>
+            <pre><code>public async Task&lt;string&gt; LoadAsync()
+{
+    await Task.Delay(500);
+    return "Loaded";
+}</code></pre>
+        </article>
+    </section>
+
+    <section class="lesson-note">
+        <h2>继续学习建议</h2>
+        <ul>
+            <li>阅读官方文档：了解 .NET 标准库与语言特性。</li>
+            <li>练习小项目：如学生管理、待办清单等。</li>
+            <li>掌握调试：使用断点与日志分析问题。</li>
+        </ul>
+    </section>
+</div>
