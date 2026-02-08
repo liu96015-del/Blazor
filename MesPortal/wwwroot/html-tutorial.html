@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML 教学教材</title>
+    <!-- 中文：这是 HTML 教学教材的页面头部 -->
+    <!-- Tiếng Việt: Đây là phần đầu của tài liệu giảng dạy HTML -->
+    <style>
+      /* 中文：简单的排版样式 */
+      /* Tiếng Việt: Kiểu trình bày đơn giản */
+      body {
+        font-family: "Segoe UI", "Noto Sans", sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        background: #f7f7f9;
+        color: #1f2937;
+      }
+
+      header {
+        background: #2563eb;
+        color: #ffffff;
+        padding: 24px 16px;
+        text-align: center;
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+
+      section {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      }
+
+      code {
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+
+      .example {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>HTML 教学教材</h1>
+      <p>面向初学者的结构化学习指南</p>
+      <!-- 中文：标题区域显示页面主题 -->
+      <!-- Tiếng Việt: Khu vực tiêu đề hiển thị chủ đề của trang -->
+    </header>
+
+    <main>
+      <section>
+        <h2>1. HTML 是什么？</h2>
+        <p>
+          HTML（HyperText Markup Language）是网页的骨架，用来描述内容结构。
+          <!-- 中文：说明 HTML 的作用 -->
+          <!-- Tiếng Việt: Giải thích vai trò của HTML -->
+        </p>
+        <ul>
+          <li>结构：标题、段落、列表、表格。</li>
+          <li>语义：让搜索引擎和浏览器理解内容。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. 基本文档结构</h2>
+        <p>每个 HTML 页面都包含以下关键标签：</p>
+        <div class="example">
+          <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-cn"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;title&gt;页面标题&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;h1&gt;我的第一张网页&lt;/h1&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+        </div>
+        <!-- 中文：展示最基础的 HTML 模板 -->
+        <!-- Tiếng Việt: Hiển thị mẫu HTML cơ bản nhất -->
+      </section>
+
+      <section>
+        <h2>3. 常用标签</h2>
+        <p>以下是最常见的内容标签：</p>
+        <ul>
+          <li><code>&lt;h1&gt;~&lt;h6&gt;</code>：标题等级。</li>
+          <li><code>&lt;p&gt;</code>：段落。</li>
+          <li><code>&lt;a&gt;</code>：超链接。</li>
+          <li><code>&lt;img&gt;</code>：图片。</li>
+        </ul>
+        <!-- 中文：列出常用标签及其含义 -->
+        <!-- Tiếng Việt: Liệt kê các thẻ phổ biến và ý nghĩa của chúng -->
+      </section>
+
+      <section>
+        <h2>4. 列表与表格</h2>
+        <p>列表与表格帮助我们组织信息。</p>
+        <div class="example">
+          <pre><code>&lt;ul&gt;
+  &lt;li&gt;无序列表项目&lt;/li&gt;
+  &lt;li&gt;另一个项目&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;table&gt;
+  &lt;tr&gt;
+    &lt;th&gt;姓名&lt;/th&gt;
+    &lt;th&gt;职业&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;李雷&lt;/td&gt;
+    &lt;td&gt;开发者&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/table&gt;</code></pre>
+        </div>
+        <!-- 中文：示例展示列表与表格的用法 -->
+        <!-- Tiếng Việt: Ví dụ hiển thị cách dùng danh sách và bảng -->
+      </section>
+
+      <section>
+        <h2>5. 表单基础</h2>
+        <p>表单用于收集用户输入。</p>
+        <div class="example">
+          <pre><code>&lt;form&gt;
+  &lt;label&gt;姓名：&lt;input type="text" name="name" /&gt;&lt;/label&gt;
+  &lt;button type="submit"&gt;提交&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+        </div>
+        <!-- 中文：表单示例包含输入框与按钮 -->
+        <!-- Tiếng Việt: Ví dụ biểu mẫu gồm ô nhập và nút bấm -->
+      </section>
+
+      <section>
+        <h2>6. 学习建议</h2>
+        <ol>
+          <li>先学结构，再学样式（CSS）。</li>
+          <li>多练习：模仿真实网页布局。</li>
+          <li>善用浏览器开发者工具。</li>
+        </ol>
+        <!-- 中文：学习路径建议 -->
+        <!-- Tiếng Việt: Gợi ý lộ trình học tập -->
+      </section>
+    </main>
+  </body>
+</html>
